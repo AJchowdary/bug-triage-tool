@@ -8,20 +8,27 @@ const openai = new OpenAI({
 
 export async function triageBug(description: string, codeContext?: string) {
   const prompt = `
-You are a senior software engineer and code bug triage expert.
+You are an expert software engineer specializing in bug triage.
 
-Given a bug description and (optional) code snippet, return only a valid JSON with the following structure:
+You will receive:
+- A short bug description
+- An optional code snippet
+
+Your task is to analyze the bug and return only a **valid JSON object** with the following keys:
 
 {
-  "category": "<short label like 'Logic Error', 'Syntax Error', 'UI Bug', etc.>",
-  "priority": "<Low | Medium | High | Critical>",
-  "bug_explanation": "<What is the bug and why it happens>",
-  "suggested_fixes": "<Steps to fix the bug>",
-  "fixed_code": "<Fixed version of the code, if code is provided. Else, empty string>",
-  "improvement_suggestions": "<How can the code be improved in general>"
+  "category": "Short label for bug type (e.g., 'Syntax Error', 'Logic Bug')",
+  "priority": "Low | Medium | High | Critical",
+  "bug_explanation": "Explain clearly what the bug is and why it happens.",
+  "suggested_fixes": "Explain how the user should fix it, step-by-step.",
+  "fixed_code": "Provide a fully corrected version of the code snippet, if one was provided.",
+  "improvement_suggestions": "List ways to improve the code in general (e.g., structure, performance, naming, readability)."
 }
 
-Only return this JSON object. Do NOT return markdown, commentary, or explanation.
+💡 IMPORTANT:
+- Only return the JSON. No extra text.
+- If no code snippet is given, set "fixed_code" to an empty string.
+- Make sure the JSON is valid and parsable.
 
 Bug Description:
 ${description}
