@@ -1,11 +1,9 @@
 {
   "name": "bug-triage-tool",
   "version": "1.0.0",
-  "description": "Developer-focused bug triage tool powered by OpenAI",
-  "main": "index.js",
+  "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "nodemon src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
@@ -28,4 +26,5 @@
     "typescript": "^5.2.2"
   }
 }
+
 
