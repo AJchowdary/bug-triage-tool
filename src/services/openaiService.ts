@@ -7,29 +7,26 @@ const openai = new OpenAI({
 });
 
 export async function triageBug(description: string, codeContext?: string) {
-  const prompt = `
-You are an expert software engineer specializing in bug triage.
+  const systemPrompt = `
+You are a senior software engineer and expert code reviewer.
 
-You will receive:
-- A short bug description
-- An optional code snippet
-
-Your task is to analyze the bug and return only a **valid JSON object** with the following keys:
+Your job is to analyze bug descriptions and optional code snippets and return ONLY a valid JSON object with this exact structure:
 
 {
-  "category": "Short label for bug type (e.g., 'Syntax Error', 'Logic Bug')",
+  "category": "Short label for bug type (e.g., 'Syntax Error', 'Logic Bug', 'Performance Issue')",
   "priority": "Low | Medium | High | Critical",
   "bug_explanation": "Explain clearly what the bug is and why it happens.",
-  "suggested_fixes": "Explain how the user should fix it, step-by-step.",
-  "fixed_code": "Provide a fully corrected version of the code snippet, if one was provided.",
-  "improvement_suggestions": "List ways to improve the code in general (e.g., structure, performance, naming, readability)."
+  "suggested_fixes": "Explain how to fix the bug step-by-step.",
+  "fixed_code": "Fully corrected version of the original code, if code was provided. Otherwise, leave this as an empty string.",
+  "improvement_suggestions": "Extra suggestions to improve the code's structure, readability, performance, or security."
 }
 
-💡 IMPORTANT:
-- Only return the JSON. No extra text.
-- If no code snippet is given, set "fixed_code" to an empty string.
-- Make sure the JSON is valid and parsable.
+⚠️ IMPORTANT RULES:
+- Respond ONLY with a **valid JSON object**. No markdown, no explanation, no commentary.
+- If no code snippet is provided, return "fixed_code": ""
+`;
 
+  const userPrompt = `
 Bug Description:
 ${description}
 
@@ -37,8 +34,11 @@ ${codeContext ? `Code Snippet:\n${codeContext}` : "No code provided"}
 `;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4", // or gpt-3.5-turbo
-    messages: [{ role: "user", content: prompt }],
+    model: "gpt-4",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
     temperature: 0.3,
   });
 
@@ -48,7 +48,7 @@ ${codeContext ? `Code Snippet:\n${codeContext}` : "No code provided"}
     const json = JSON.parse(text);
     return json;
   } catch (err) {
-    console.error("❌ AI response not valid JSON:\n", text);
+    console.error("❌ Failed to parse AI JSON response:\n", text);
     return {
       category: "ParseError",
       priority: "Unknown",
@@ -59,6 +59,7 @@ ${codeContext ? `Code Snippet:\n${codeContext}` : "No code provided"}
     };
   }
 }
+
 
 
  
