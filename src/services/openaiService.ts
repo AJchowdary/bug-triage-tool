@@ -8,28 +8,35 @@ const openai = new OpenAI({
 
 export async function triageBug(description: string, codeContext?: string) {
   const prompt = `
-You are an experienced developer triaging bug reports.
+You are an expert software engineer and code reviewer.
 
-Given the following bug description and optional code context, return:
-1. Category (UI, Backend, Security, Performance, Other)
-2. Priority (Critical, High, Medium, Low)
-3. Suggested fix or next step
+Your task is to perform a thorough bug triage and code review.
+
+Given a bug description and optional code snippet, return a structured response in the following strict JSON format:
+
+{
+  "category": "Short general category for the bug (e.g., 'UI Bug', 'Logic Error', 'Security Flaw')",
+  "priority": "Low | Medium | High | Critical",
+  "bug_explanation": "Clear explanation of the bug and why it occurs",
+  "suggested_fixes": "Step-by-step fix or plan to resolve the bug",
+  "fixed_code": "Only if code is provided, return the corrected and improved version",
+  "improvement_suggestions": "Optional but helpful suggestions to improve performance, maintainability, or security"
+}
+
+If code is not provided, or no bugs are found, clearly state that in the explanation field and set 'fixed_code' to an empty string.
+
+Respond ONLY with valid JSON — do not include markdown formatting or extra text.
+
+---
 
 Bug Description:
 ${description}
 
-${codeContext ? `Code Context:\n${codeContext}` : ""}
-
-Respond ONLY in this JSON format:
-{
-  "category": "...",
-  "priority": "...",
-  "suggested_fix": "..."
-}
-  `;
+${codeContext ? `Code Snippet:\n${codeContext}` : ""}
+`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
+    model: "gpt-4", // you can downgrade to "gpt-3.5-turbo" if needed
     messages: [{ role: "user", content: prompt }],
     temperature: 0.3,
   });
@@ -38,11 +45,15 @@ Respond ONLY in this JSON format:
 
   try {
     return JSON.parse(text);
-  } catch {
+  } catch (error) {
+    console.error("Failed to parse OpenAI response:", error, "\nResponse was:\n", text);
     return {
       category: "Unknown",
       priority: "Unknown",
-      suggested_fix: "Could not parse response",
+      bug_explanation: "Could not parse response",
+      suggested_fixes: "",
+      fixed_code: "",
+      improvement_suggestions: "",
     };
   }
 }
