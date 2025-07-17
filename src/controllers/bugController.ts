@@ -8,16 +8,14 @@ export const handleBugTriage = async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Bug description is required." });
   }
 
-  console.log("Incoming triage request:", { description, codeContext });
-
   try {
     const result = await triageBug(description, codeContext);
-    console.log("Triage result:", result);
     res.json(result);
   } catch (error) {
-    console.error("Triage error:", error);
-    res.status(500).json({ error: "AI triage failed." });
+    console.error("Error in bug triage:", error);
+    res.status(500).json({ error: "Bug triage failed." });
   }
 };
+
 
  
