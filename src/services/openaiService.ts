@@ -8,25 +8,24 @@ const openai = new OpenAI({
 
 export async function triageBug(description: string, codeContext?: string) {
   const systemPrompt = `
-You are a senior software engineer and code review assistant.
+You are a senior software engineer and code review expert.
 
-You must return a VALID JSON object with exactly these fields:
+Your ONLY job is to read the bug description and optional code snippet, then output a STRICTLY VALID JSON object with EXACTLY these keys:
+
 {
-  "category": "Short label (e.g., 'Syntax Error', 'Logic Bug', 'Runtime Issue')",
-  "priority": "Low | Medium | High | Critical",
-  "bug_explanation": "Explain the bug in simple terms.",
-  "suggested_fixes": "Explain step-by-step how to fix the bug.",
-  "fixed_code": "Fixed version of the input code. If no code given, return an empty string.",
-  "improvement_suggestions": "Suggest ways to improve code performance, structure, or readability."
+  "category": string,
+  "priority": string,
+  "bug_explanation": string,
+  "suggested_fixes": string,
+  "fixed_code": string,
+  "improvement_suggestions": string
 }
 
 RULES:
-- Respond ONLY with a pure JSON object. No markdown, no extra text.
-- Make sure all fields are present.
-- If code was provided, include the fixed version in 'fixed_code'.
-- Keep values short and clear.
-
-Respond strictly as per the JSON format above.
+- Return ONLY the JSON object, no extra text or markdown.
+- If no code is provided, "fixed_code" should be an empty string.
+- Be concise and clear.
+- Do not explain or apologize outside the JSON.
 `;
 
   const userPrompt = `
