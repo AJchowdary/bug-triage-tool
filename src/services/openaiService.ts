@@ -8,29 +8,32 @@ const openai = new OpenAI({
 
 export async function triageBug(description: string, codeContext?: string) {
   const systemPrompt = `
-You are a senior software engineer and expert code reviewer.
+You are a senior software engineer and code review assistant.
 
-Your job is to analyze bug descriptions and optional code snippets and return ONLY a valid JSON object with this exact structure:
-
+You must return a VALID JSON object with exactly these fields:
 {
-  "category": "Short label for bug type (e.g., 'Syntax Error', 'Logic Bug', 'Performance Issue')",
+  "category": "Short label (e.g., 'Syntax Error', 'Logic Bug', 'Runtime Issue')",
   "priority": "Low | Medium | High | Critical",
-  "bug_explanation": "Explain clearly what the bug is and why it happens.",
-  "suggested_fixes": "Explain how to fix the bug step-by-step.",
-  "fixed_code": "Fully corrected version of the original code, if code was provided. Otherwise, leave this as an empty string.",
-  "improvement_suggestions": "Extra suggestions to improve the code's structure, readability, performance, or security."
+  "bug_explanation": "Explain the bug in simple terms.",
+  "suggested_fixes": "Explain step-by-step how to fix the bug.",
+  "fixed_code": "Fixed version of the input code. If no code given, return an empty string.",
+  "improvement_suggestions": "Suggest ways to improve code performance, structure, or readability."
 }
 
-⚠️ IMPORTANT RULES:
-- Respond ONLY with a **valid JSON object**. No markdown, no explanation, no commentary.
-- If no code snippet is provided, return "fixed_code": ""
+RULES:
+- Respond ONLY with a pure JSON object. No markdown, no extra text.
+- Make sure all fields are present.
+- If code was provided, include the fixed version in 'fixed_code'.
+- Keep values short and clear.
+
+Respond strictly as per the JSON format above.
 `;
 
   const userPrompt = `
 Bug Description:
 ${description}
 
-${codeContext ? `Code Snippet:\n${codeContext}` : "No code provided"}
+${codeContext ? `Code:\n${codeContext}` : "No code was submitted"}
 `;
 
   const response = await openai.chat.completions.create({
@@ -39,26 +42,30 @@ ${codeContext ? `Code Snippet:\n${codeContext}` : "No code provided"}
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    temperature: 0.3,
+    temperature: 0.2,
+    max_tokens: 1000,
   });
 
-  const text = response.choices?.[0]?.message?.content ?? "{}";
+  const rawContent = response.choices?.[0]?.message?.content ?? "{}";
+
+  console.log("Raw AI response:", rawContent);
 
   try {
-    const json = JSON.parse(text);
-    return json;
-  } catch (err) {
-    console.error("❌ Failed to parse AI JSON response:\n", text);
+    const parsed = JSON.parse(rawContent.trim());
+    return parsed;
+  } catch (e) {
+    console.error("❌ Failed to parse AI JSON. Response was:\n", rawContent);
     return {
-      category: "ParseError",
+      category: "ParsingError",
       priority: "Unknown",
-      bug_explanation: "Unable to parse AI response.",
+      bug_explanation: "Failed to parse AI output. Likely due to formatting.",
       suggested_fixes: "",
       fixed_code: "",
       improvement_suggestions: "",
     };
   }
 }
+
 
 
 
