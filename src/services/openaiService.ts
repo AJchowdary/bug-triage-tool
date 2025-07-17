@@ -8,54 +8,50 @@ const openai = new OpenAI({
 
 export async function triageBug(description: string, codeContext?: string) {
   const prompt = `
-You are an expert software engineer and code reviewer.
+You are a senior software engineer and code bug triage expert.
 
-Your task is to perform a thorough bug triage and code review.
-
-Given a bug description and optional code snippet, return a structured response in the following strict JSON format:
+Given a bug description and (optional) code snippet, return only a valid JSON with the following structure:
 
 {
-  "category": "Short general category for the bug (e.g., 'UI Bug', 'Logic Error', 'Security Flaw')",
-  "priority": "Low | Medium | High | Critical",
-  "bug_explanation": "Clear explanation of the bug and why it occurs",
-  "suggested_fixes": "Step-by-step fix or plan to resolve the bug",
-  "fixed_code": "Only if code is provided, return the corrected and improved version",
-  "improvement_suggestions": "Optional but helpful suggestions to improve performance, maintainability, or security"
+  "category": "<short label like 'Logic Error', 'Syntax Error', 'UI Bug', etc.>",
+  "priority": "<Low | Medium | High | Critical>",
+  "bug_explanation": "<What is the bug and why it happens>",
+  "suggested_fixes": "<Steps to fix the bug>",
+  "fixed_code": "<Fixed version of the code, if code is provided. Else, empty string>",
+  "improvement_suggestions": "<How can the code be improved in general>"
 }
 
-If code is not provided, or no bugs are found, clearly state that in the explanation field and set 'fixed_code' to an empty string.
-
-Respond ONLY with valid JSON — do not include markdown formatting or extra text.
-
----
+Only return this JSON object. Do NOT return markdown, commentary, or explanation.
 
 Bug Description:
 ${description}
 
-${codeContext ? `Code Snippet:\n${codeContext}` : ""}
+${codeContext ? `Code Snippet:\n${codeContext}` : "No code provided"}
 `;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4", // you can downgrade to "gpt-3.5-turbo" if needed
+    model: "gpt-4", // or gpt-3.5-turbo
     messages: [{ role: "user", content: prompt }],
     temperature: 0.3,
   });
 
-  const text = response.choices[0]?.message?.content ?? "{}";
+  const text = response.choices?.[0]?.message?.content ?? "{}";
 
   try {
-    return JSON.parse(text);
-  } catch (error) {
-    console.error("Failed to parse OpenAI response:", error, "\nResponse was:\n", text);
+    const json = JSON.parse(text);
+    return json;
+  } catch (err) {
+    console.error("❌ AI response not valid JSON:\n", text);
     return {
-      category: "Unknown",
+      category: "ParseError",
       priority: "Unknown",
-      bug_explanation: "Could not parse response",
+      bug_explanation: "Unable to parse AI response.",
       suggested_fixes: "",
       fixed_code: "",
       improvement_suggestions: "",
     };
   }
 }
+
 
  
