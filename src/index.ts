@@ -18,8 +18,18 @@ if (!OPENAI_API_KEY) {
   console.warn("❌ OPENAI_API_KEY is not defined in your .env file.");
 }
 
+// ✅ CORS setup - allow Vercel frontend
+app.use(cors({
+  origin: "https://bug-triage-tool.vercel.app", // Replace with your actual deployed frontend URL
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+// ✅ Handle preflight requests
+app.options("*", cors());
+
 // Middleware
-app.use(cors());
 app.use(express.json()); // Must come BEFORE routes
 
 // Log all incoming requests
@@ -48,6 +58,7 @@ const server = app.listen(PORT, HOST, () => {
   const address = server.address() as AddressInfo;
   console.log(`✅ Server listening on http://${address.address}:${address.port}`);
 });
+
 
 
 
