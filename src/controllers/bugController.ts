@@ -2,20 +2,23 @@ import { Request, Response } from "express";
 import { triageBug } from "../services/openaiService";
 
 export const handleBugTriage = async (req: Request, res: Response) => {
-  const { description, codeContext } = req.body;
+  const description = req.body.description || req.body.bug_explanation;
+  const codeContext = req.body.codeContext || "";
 
-  if (!description) {
+  if (!description || typeof description !== "string" || description.trim() === "") {
     return res.status(400).json({ error: "Bug description is required." });
   }
 
   try {
-    const result = await triageBug(description, codeContext);
-    res.json(result);
+    const triageResult = await triageBug(description, codeContext);
+    return res.json(triageResult);
   } catch (error) {
     console.error("Error in bug triage:", error);
-    res.status(500).json({ error: "Bug triage failed." });
+    return res.status(500).json({ error: "Bug triage failed." });
   }
 };
+
+
 
 
  

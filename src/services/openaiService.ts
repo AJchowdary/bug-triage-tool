@@ -44,8 +44,7 @@ ${codeContext ? `Code Snippet:\n${codeContext}` : "No code snippet provided."}
   console.log("Raw AI response:", rawResponse);
 
   try {
-    const parsed = JSON.parse(rawResponse.trim());
-    return parsed;
+    return JSON.parse(rawResponse.trim());
   } catch (e) {
     console.error("Failed to parse AI JSON response", e);
     return {
@@ -58,6 +57,8 @@ ${codeContext ? `Code Snippet:\n${codeContext}` : "No code snippet provided."}
     };
   }
 }
+
+
 
 
 
