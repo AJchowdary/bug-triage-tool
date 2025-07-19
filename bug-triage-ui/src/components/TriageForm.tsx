@@ -15,7 +15,8 @@ const TriageForm: React.FC<TriageFormProps> = ({ token, setResult }) => {
     setLoading(true);
     setResult(""); // Clear result before new submission
     try {
-      const response = await fetch("http://localhost:4002/api/triage", {
+      const response = await fetch("https://bug-triage-tool.onrender.com/api/triage"
+, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
