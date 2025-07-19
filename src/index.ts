@@ -1,3 +1,4 @@
+import { AddressInfo } from "net";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -8,7 +9,8 @@ import authRoutes from "./routes/authRoutes";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 4002;
+const PORT = Number(process.env.PORT) || 4002;
+const HOST = "0.0.0.0";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 // Warn if API key is missing
@@ -41,10 +43,12 @@ app.get("/", (_req, res) => {
   res.send("🛠️ Bug Triage Tool API is running.");
 });
 
-// Start server
-app.listen(Number(PORT), '0.0.0.0', () => {
-  console.log(`✅ Server listening on http://0.0.0.0:${PORT}`);
+// Start server with proper typings
+const server = app.listen(PORT, HOST, () => {
+  const address = server.address() as AddressInfo;
+  console.log(`✅ Server listening on http://${address.address}:${address.port}`);
 });
+
 
 
 
